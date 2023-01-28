@@ -1,20 +1,11 @@
-# is-docker
-Checks if the process is running inside a Docker container. Rust implementation of `sindresorhus/is-docker`
+# krate
+Get information and metadata for a Rust Crate published on Crates.io
 
 ## Usage 
-`$> cargo add is-docker`
+`$> cargo add krate`
 
 _main.rs_
 ```rust
-
-use is_docker::is_docker
-
-fn main() {
-    if is_docker() {
-        // Do some docker related stuff 🎇
-    } else {
-        // Do some different things! <3
-    }
-}
+// TODO: Make a great example!
 ```
 
