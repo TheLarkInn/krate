@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use thiserror::Error;
 
 const CRATES_IO_URL: &str = "https://crates.io/api/v1/crates";
-const UNIQUE_USER_AGENT: &str = "krates/0.2.0";
+const UNIQUE_USER_AGENT: &str = "krates/0.3.0";
 
 #[derive(Error, Debug)]
 enum KrateError {
