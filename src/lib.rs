@@ -90,6 +90,11 @@ fn handle_error(e: reqwest::Error) -> KrateError {
 }
 
 pub async fn get_async(crate_name: &str, user_agent: &str) -> Result<Krate>  {
+    // Enforce a string with actual characters in it
+    if user_agent.trim().len() == 0 {
+        return Err(anyhow::anyhow!("User Agent must be a string with at least one character"));
+    }
+
     let url = format!("{CRATES_IO_URL}/{crate_name}");
 
     let client = ClientBuilder::new()
