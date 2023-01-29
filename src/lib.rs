@@ -136,5 +136,11 @@ mod tests {
         assert!(krate.is_err());
         assert_eq!(krate.err().unwrap().to_string(), "Crate name is not found. Did you mispell the crate name?");
     }
+
+    #[tokio::test]
+    async fn errors_on_empty_user_agent() {
+        let krate = get_async("is-wsl", "    ").await;
+        assert_eq!(krate.err().unwrap().to_string(), "User Agent must be a string with at least one character");
+    }
 }
 
