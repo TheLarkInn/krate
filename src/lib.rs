@@ -90,7 +90,7 @@ fn handle_error(e: reqwest::Error) -> KrateError {
 }
 
 pub async fn get_async(crate_name: &str) -> Result<Krate>  {
-    let url = format!("{}/{}", CRATES_IO_URL, crate_name);
+    let url = format!("{CRATES_IO_URL}/{crate_name}");
 
     let client = ClientBuilder::new()
         .user_agent(UNIQUE_USER_AGENT)

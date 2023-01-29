@@ -8,6 +8,6 @@ async fn main() {
             println!("Latest Version: {}", serde_crate.get_latest());
             println!("Description: {}", serde_crate.krate.description );
         },
-        Err(e) => println!("Error: {}", e),
+        Err(e) => println!("Error: {e}"),
     }    
 }
