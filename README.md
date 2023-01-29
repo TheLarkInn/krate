@@ -1,4 +1,6 @@
 # krate 📦
+<img src="https://user-images.githubusercontent.com/3408176/215298824-61657e9b-5cd3-401e-b7c6-3a31d9876b67.png" width="250"/>
+
 Get information and metadata for a Rust Crate published on Crates.io!
 
 `krate` additionally comes with `struct Krate` which contains a partially implemented data model for the &*Crates.io* API/V1 Contract. 
