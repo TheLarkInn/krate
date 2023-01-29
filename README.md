@@ -18,7 +18,7 @@ _main.rs_
 #[tokio::main]
 async fn main() {
     // Use Krate::get_async to get information on a particular Krate!
-    match krate::get_async("serde").await {
+    match krate::get_async("serde", "My User Agent Tool).await {
         Ok(serde_crate) => {
             println!("Krate: {}", serde_crate.krate.name);
             println!("Latest Version: {}", serde_crate.get_latest());
