@@ -5,6 +5,8 @@ Get information and metadata for a Rust Crate published on Crates.io!
 
 **NOTE:** Currently there is no _publically_ docuemented API contract for the *Crates.io* API/V1 Contract so any changes or `null` values passed via the API could break serialization. 🤷‍♂️
 
+Please see the [crawler policy on Crates.io](https://crates.io/policies#crawlers) if you are planning to use this library to crawl or access the crates data.
+
 ## Usage 
 `$> cargo add krate`
 

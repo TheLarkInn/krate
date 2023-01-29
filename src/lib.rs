@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use thiserror::Error;
 
 const CRATES_IO_URL: &str = "https://crates.io/api/v1/crates";
-const UNIQUE_USER_AGENT: &str = "krates/0.1.0";
+const UNIQUE_USER_AGENT: &str = "krates/0.2.0";
 
 #[derive(Error, Debug)]
 enum KrateError {
@@ -89,11 +89,11 @@ fn handle_error(e: reqwest::Error) -> KrateError {
     }
 }
 
-pub async fn get_async(crate_name: &str) -> Result<Krate>  {
+pub async fn get_async(crate_name: &str, user_agent: &str) -> Result<Krate>  {
     let url = format!("{CRATES_IO_URL}/{crate_name}");
 
     let client = ClientBuilder::new()
-        .user_agent(UNIQUE_USER_AGENT)
+        .user_agent(format!("{user_agent} - Brought to you by: {UNIQUE_USER_AGENT}",))
         .build()?;
 
     let res: Response = client.get(url).send().await?;
@@ -115,19 +115,19 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_crate_basic() {
-        let krate = get_async("is-wsl").await.unwrap();
+        let krate = get_async("is-wsl", "Test Mocks for TheLarkInn/krate").await.unwrap();
         assert_eq!(krate.krate.name, "is-wsl");
     }
 
     #[tokio::test]
     async fn test_get_latest_version_from_crate() {
-        let krate: Krate = get_async("tokio").await.unwrap();
+        let krate: Krate = get_async("tokio", "Test Mocks for TheLarkInn/krate").await.unwrap();
         assert_eq!(krate.get_latest(), "1.24.2");
     }
 
     #[tokio::test]
     async fn informs_operator_of_not_found_error() {
-        let krate = get_async("tokioz").await;
+        let krate = get_async("tokioz", "Test Mocks for TheLarkInn/krate").await;
         assert!(krate.is_err());
         assert_eq!(krate.err().unwrap().to_string(), "Crate name is not found. Did you mispell the crate name?");
     }
