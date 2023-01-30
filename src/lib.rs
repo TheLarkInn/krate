@@ -128,6 +128,38 @@ pub fn get(crate_name: &str, user_agent: &str) -> Result<Krate> {
     }
 }
 
+pub fn get_multi(crate_names: Vec<&str>, user_agent: &str) -> Result<Vec<Krate>> {
+    if has_empty_user_agent(user_agent) {
+        return Err(anyhow::anyhow!(
+            "User Agent must be a string with at least one character"
+        ));
+    }
+
+    // Build the client with correct user header
+    let client = reqwest::blocking::ClientBuilder::new()
+        .user_agent(format!(
+            "{user_agent} - Brought to you by: {UNIQUE_USER_AGENT}",
+        ))
+        .build()?;
+
+    let mut krates: Vec<Krate> = Vec::new();
+
+    for crate_name in crate_names {
+        let url = format!("{CRATES_IO_URL}/{crate_name}");
+        let res = client.get(url).send()?;
+
+        match res.error_for_status() {
+            Ok(res) => {
+                let krate: Krate = res.json()?;
+                krates.push(krate);
+            }
+            Err(e) => return Err(handle_error(e).into()),
+        }
+    }
+
+    Ok(krates)
+}
+
 pub async fn get_async(crate_name: &str, user_agent: &str) -> Result<Krate> {
     // Enforce a string with actual characters in it
     if has_empty_user_agent(user_agent) {
@@ -159,6 +191,7 @@ pub async fn get_async(crate_name: &str, user_agent: &str) -> Result<Krate> {
 mod tests {
     use super::*;
 
+    // krate::get_async()
     #[tokio::test]
     async fn test_get_async_crate_basic() {
         let krate = get_async("is-wsl", "Test Mocks for TheLarkInn/krate")
@@ -172,7 +205,8 @@ mod tests {
         let krate: Krate = get_async("tokio", "Test Mocks for TheLarkInn/krate")
             .await
             .unwrap();
-        assert_eq!(krate.get_latest(), "1.24.2");
+
+        assert_eq!(krate.get_latest(), krate.versions[0].num);
     }
 
     #[tokio::test]
@@ -194,6 +228,7 @@ mod tests {
         );
     }
 
+    // krate::get
     #[test]
     fn test_get_crate_basic() {
         let krate = get("is-interactive", "Test Mocks for TheLarkInn/krate").unwrap();
@@ -205,12 +240,14 @@ mod tests {
         );
     }
 
+    // krate::get_latest()
     #[test]
     fn test_get_get_latest() {
         let krate: Krate = get("syn", "Test Mocks for TheLarkInn/krate").unwrap();
-        assert_eq!(krate.get_latest(), "1.0.107");
+        assert_eq!(krate.get_latest(), krate.versions[0].num);
     }
 
+    // krate::get_features_for_version()
     #[test]
     fn test_get_features_for_version() {
         let krate: Krate = get("tokio", "Test Mocks for TheLarkInn/krate").unwrap();
@@ -223,5 +260,37 @@ mod tests {
         let krate: Krate = get("cargo-outdated", "Test Mocks for TheLarkInn/krate").unwrap();
         let features = krate.get_features_for_version("9999.0.00");
         assert!(features.is_none());
+    }
+
+    // krate::get_multi()
+    #[test]
+    fn test_get_multi_success() {
+        let krate_names = vec!["has-env-flag", "krate", "serde-json"];
+        let krates: Vec<Krate> = get_multi(krate_names, "Test Mocks for TheLarkInn/krate").unwrap();
+
+        assert_eq!(krates.len(), 3);
+    }
+
+    #[test]
+    fn test_more_get_multi_success() {
+        let krate_names = vec![
+            "has-env-flag",
+            "krate",
+            "serde-json",
+            "is-wsl",
+            "strip-ansi",
+            "ansi-regex",
+        ];
+        let krates: Vec<Krate> = get_multi(krate_names, "Test Mocks for TheLarkInn/krate").unwrap();
+
+        assert_eq!(krates.len(), 6);
+    }
+
+    #[test]
+    fn test_get_multi_with_single_error() {
+        let krate_names = vec!["--sdahas-env-flag", "krate", "serde-json"];
+        let krates = get_multi(krate_names, "Test Mocks for TheLarkInn/krate");
+
+        assert!(krates.is_err());
     }
 }
