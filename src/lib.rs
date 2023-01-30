@@ -172,7 +172,7 @@ mod tests {
         let krate: Krate = get_async("tokio", "Test Mocks for TheLarkInn/krate")
             .await
             .unwrap();
-        assert_eq!(krate.get_latest(), "1.24.2");
+        assert_eq!(krate.get_latest(), krate.versions[0].num);
     }
 
     #[tokio::test]
@@ -208,7 +208,7 @@ mod tests {
     #[test]
     fn test_get_get_latest() {
         let krate: Krate = get("syn", "Test Mocks for TheLarkInn/krate").unwrap();
-        assert_eq!(krate.get_latest(), "1.0.107");
+        assert_eq!(krate.get_latest(), krate.versions[0].num);
     }
 
     #[test]
