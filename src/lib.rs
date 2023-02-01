@@ -34,7 +34,7 @@ impl Krate {
 
 #[derive(Debug, Deserialize)]
 pub struct Krate {
-    pub categories: Vec<KrateCategory>,
+    pub categories: Option<Vec<KrateCategory>>,
     pub versions: Vec<KrateVersion>,
     #[serde(rename = "crate")]
     pub krate: KrateMetadata,
@@ -79,7 +79,7 @@ pub struct KrateMetadata {
     pub name: String,
     pub newest_version: String,
     pub recent_downloads: i64,
-    pub repository: String,
+    pub repository: Option<String>,
     pub updated_at: String,
     pub versions: Vec<i32>,
 }
@@ -316,5 +316,14 @@ mod tests {
         let krate: Krate = get_sync_krate_client().get("cargo-outdated").unwrap();
         let features = krate.get_features_for_version("9999.0.00");
         assert!(features.is_none());
+    }
+
+    #[test]
+    fn test_edge_case_packages_without_data() {
+        let krate = get_sync_krate_client().get("rustc-workspace-hack");
+
+        println!("{:?}", krate);
+        
+        assert!(krate.is_ok())
     }
 }
