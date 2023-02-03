@@ -1,8 +1,9 @@
-use anyhow::Result;
 use reqwest::{ClientBuilder, Response};
 use serde::Deserialize;
 use std::collections::HashMap;
 use thiserror::Error;
+
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 const CRATES_IO_URL: &str = "https://crates.io/api/v1/crates";
 const UNIQUE_USER_AGENT: &str = "krates/0.3.0";
@@ -11,6 +12,8 @@ const UNIQUE_USER_AGENT: &str = "krates/0.3.0";
 enum KrateError {
     #[error("Crate name is not found. Did you mispell the crate name?")]
     KrateNotFound,
+    #[error("User Agent must be a string with at least one character")]
+    UserAgentNotProvided,
     #[error("Server Status Error: {0}")]
     OtherKrateError(reqwest::Error),
 }
@@ -32,7 +35,7 @@ impl Krate {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Krate {
     pub categories: Option<Vec<KrateCategory>>,
     pub versions: Vec<KrateVersion>,
@@ -41,7 +44,7 @@ pub struct Krate {
     pub keywords: Option<Vec<Option<KrateKeyword>>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct KrateVersion {
     pub crate_size: Option<i64>,
     pub license: Option<String>,
@@ -52,7 +55,7 @@ pub struct KrateVersion {
     pub id: i64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct KrateCategory {
     pub category: String,
     pub crates_cnt: i32,
@@ -62,7 +65,7 @@ pub struct KrateCategory {
     pub slug: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct KrateMetadata {
     pub categories: Vec<String>,
     pub created_at: String,
@@ -84,7 +87,7 @@ pub struct KrateMetadata {
     pub versions: Vec<i32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct KrateKeyword {
     pub crates_cnt: i64,
     pub created_at: String,
@@ -103,7 +106,7 @@ pub struct AsyncKrateClient {
 }
 
 impl SyncKrateClient {
-    pub fn get(&self, crate_name: &str) -> anyhow::Result<Krate> {
+    pub fn get(&self, crate_name: &str) -> Result<Krate> {
         let url = format!("{CRATES_IO_URL}/{crate_name}");
 
         let res = self.client.get(url).send()?;
@@ -118,7 +121,7 @@ impl SyncKrateClient {
 }
 
 impl AsyncKrateClient {
-    pub async fn get_async(&self, crate_name: &str) -> anyhow::Result<Krate> {
+    pub async fn get_async(&self, crate_name: &str) -> Result<Krate> {
         let url = format!("{CRATES_IO_URL}/{crate_name}");
         let res: Response = self.client.get(url).send().await?;
 
@@ -143,11 +146,9 @@ impl KrateClientBuilder {
         }
     }
 
-    pub fn build_sync(&self) -> anyhow::Result<SyncKrateClient> {
+    pub fn build_sync(&self) -> Result<SyncKrateClient> {
         if has_empty_user_agent(&self.user_agent) {
-            return Err(anyhow::anyhow!(
-                "User Agent must be a string with at least one character"
-            ));
+            return Err(Box::new(KrateError::UserAgentNotProvided));
         }
 
         let operator_user_agent = format!(
@@ -162,11 +163,11 @@ impl KrateClientBuilder {
         return Ok(SyncKrateClient { client: client });
     }
 
-    pub fn build_asnyc(&self) -> anyhow::Result<AsyncKrateClient> {
+    pub fn build_asnyc(&self) -> Result<AsyncKrateClient> {
         if has_empty_user_agent(&self.user_agent) {
-            return Err(anyhow::anyhow!(
-                "User Agent must be a string with at least one character"
-            ));
+            if has_empty_user_agent(&self.user_agent) {
+                return Err(Box::new(KrateError::UserAgentNotProvided));
+            }
         }
 
         let operator_user_agent = format!(
@@ -213,13 +214,6 @@ pub fn get(crate_name: &str, user_agent: &str) -> Result<Krate> {
 }
 
 pub async fn get_async(crate_name: &str, user_agent: &str) -> Result<Krate> {
-    // Enforce a string with actual characters in it
-    if has_empty_user_agent(user_agent) {
-        return Err(anyhow::anyhow!(
-            "User Agent must be a string with at least one character"
-        ));
-    }
-
     let url = format!("{CRATES_IO_URL}/{crate_name}");
 
     let client = ClientBuilder::new()
@@ -322,8 +316,6 @@ mod tests {
     fn test_edge_case_packages_without_data() {
         let krate = get_sync_krate_client().get("rustc-workspace-hack");
 
-        println!("{:?}", krate);
-        
         assert!(krate.is_ok())
     }
 }
